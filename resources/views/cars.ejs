@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List of Cars</title>
+</head>
+<body>
+<h1>List of Cars</h1>
+<!-- ... (daftar mobil yang ada) -->
+<ul>
+    <% cars.forEach(car => { %>
+        <li>
+            <strong>Name:</strong> <%= car.name %><br>
+            <strong>Price:</strong> $<%= car.price %><br>
+            <% if (car.size) { %>
+                <strong>Size:</strong> <%= car.size %><br>
+            <% } %>
+            <% if (car.image) { %>
+                <img src="<%= car.image %>" alt="<%= car.name %>">
+            <% } %>
+            <br>
+
+
+            <!-- Tombol Edit (menuju ke halaman edit) -->
+            <a href="/cars/<%= car.id %>/edit">Edit</a>
+
+            <!-- Formulir untuk menghapus mobil -->
+            <form action="/cars/<%= car.id %>/delete" method="POST">
+                <button type="submit">Delete</button>
+            </form>
+        </li>
+    <% }); %>
+</ul>
+<!-- ... -->
+
+<form id="carForm" onsubmit="addCar(event)">
+    <label for="name">Car Name:</label>
+    <input type="text" id="name" name="name" required>
+
+    <label for="price">Car Price:</label>
+    <input type="number" id="price" name="price" required>
+
+    <label for="size">Car Size:</label>
+    <input type="text" id="size" name="size">
+
+    <label for="image">Image:</label>
+    <input type="file" id="image" name="image" accept="image/*"> <!-- Menggunakan input type "file" untuk mengunggah gambar -->
+
+    <button type="submit">Add Car</button>
+</form>
+
+
+<script>
+    // app.js
+    async function addCar(event) {
+        event.preventDefault(); // Menghentikan pengiriman formulir biasa
+
+        const name = document.getElementById('name').value;
+        const price = parseFloat(document.getElementById('price').value);
+        const size = document.getElementById('size').value;
+        const imageInput = document.getElementById('image');
+        const image = imageInput.files[0]; // Ambil file gambar dari input
+
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('price', price);
+        formData.append('size', size);
+        formData.append('image', image); // Mengirim file gambar sebagai bagian dari FormData
+
+        try {
+            const response = await fetch('/add-cars', {
+                method: 'POST',
+                body: formData, // Mengirim FormData yang berisi gambar
+            });
+
+            if (response.ok) {
+                const newCar = await response.json();
+                console.log('Data mobil baru:', newCar);
+
+                // Tambahkan mobil baru ke daftar mobil pada halaman
+                appendCarToList(newCar);
+
+                // Bersihkan input formulir
+                clearFormInputs();
+            } else {
+                console.error('Gagal menambahkan mobil:', response.status, response.statusText);
+            }
+        } catch (error) {
+            console.error('Terjadi kesalahan:', error);
+            // Handle kesalahan jika diperlukan
+        }
+    }
+
+
+
+    function appendCarToList(car) {
+        const ul = document.querySelector('ul');
+
+        const li = document.createElement('li');
+        li.innerHTML = `
+        <strong>Name:</strong> ${car.name}<br>
+        <strong>Price:</strong> $${car.price}<br>
+        ${car.size ? `<strong>Size:</strong> ${car.size}<br>` : ''}
+        ${car.image ? `<img src="${car.image}" alt="${car.name}">` : ''}
+        <br>
+        <a href="/cars/${car.id}/edit">Edit</a>
+        <form action="/cars/${car.id}/delete" method="POST">
+            <button type="submit">Delete</button>
+        </form>
+    `;
+
+        ul.appendChild(li);
+    }
+
+    function clearFormInputs() {
+        document.getElementById('name').value = '';
+        document.getElementById('price').value = '';
+        document.getElementById('size').value = '';
+        document.getElementById('image').value = '';
+    }
+
+</script>
+
+</body>
+</html>
